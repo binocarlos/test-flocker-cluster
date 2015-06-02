@@ -24,13 +24,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   vms.each_with_index do |i, x|
     config.vm.define vm_name = i do |config|
-      config.vm.network :private_network, :ip => "172.16.160.#{x+1}"
+      config.vm.network :private_network, :ip => "172.16.160.#{x+10}"
       config.vm.hostname = vm_name
       config.vm.provider "virtualbox" do |v|
         v.memory = 2048
       end
       # allow root to SSH into the machines the same as ubuntu
-      config.vm.provision :shell, inline: 'sudo cp /home/ubuntu/.ssh/authorized_keys /root/.ssh/authorized_keys'
+      config.vm.provision :shell, inline: 'sudo cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys'
     end
   end
 end
