@@ -8,11 +8,16 @@ export PLUGIN_BRANCH=${PLUGIN_BRANCH:="txflocker-env-vars"}
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# manually configure the nodes from the vagrantfile
 runner1=172.16.160.10
 runner2=172.16.160.11
 master=172.16.160.12
 
+# use this ssh key to connect to the nodes
 sshkey=$DIR/insecure_private_key
+
+# ensure that permissions are set correctly on the ssh keys
+chmod 0600 $DIR/insecure_private_key $DIR/insecure_private_key.pub
 
 if [[ -d "$DIR/unofficial-flocker-tools" ]]; then
   rm -f $DIR/unofficial-flocker-tools
