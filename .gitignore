@@ -1,0 +1,13 @@
+*.box
+.*.sw?
+.DS_Store
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+._*
+.vagrant
+Icon?
+Thumbs.db
+ehthumbs.db
+.aws_secrets
