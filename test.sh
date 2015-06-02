@@ -14,8 +14,8 @@ master=172.16.160.12
 
 sshkey=$DIR/insecure_private_key
 
-if [[ -d "unofficial-flocker-tools" ]]; then
-  rm -f unofficial-flocker-tools
+if [[ -d "$DIR/unofficial-flocker-tools" ]]; then
+  rm -f $DIR/unofficial-flocker-tools
 fi
 
 cd $DIR && git clone $TOOLS_REPO
@@ -42,3 +42,10 @@ agent_config:
 EOF
 
 cd $DIR/unofficial-flocker-tools && ./install.py cluster.yml
+#cd $DIR/unofficial-flocker-tools && ./deploy.py cluster.yml
+#cd $DIR/unofficial-flocker-tools && \
+#  DOCKER_BINARY_URL=http://storage.googleapis.com/experiments-clusterhq/docker-binaries/docker-volumes-network-combo \
+#  DOCKER_SERVICE_NAME=docker.io \
+#  PLUGIN_REPO=https://github.com/clusterhq/flocker-docker-plugin \
+#  PLUGIN_BRANCH=txflocker-env-vars \
+#  ./plugin.py cluster.yml
