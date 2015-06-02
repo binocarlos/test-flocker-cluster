@@ -20,7 +20,7 @@ sshkey=$DIR/insecure_private_key
 chmod 0600 $DIR/insecure_private_key $DIR/insecure_private_key.pub
 
 if [[ -d "$DIR/unofficial-flocker-tools" ]]; then
-  rm -f $DIR/unofficial-flocker-tools
+  rm -rf $DIR/unofficial-flocker-tools
 fi
 
 cd $DIR && git clone $TOOLS_REPO
