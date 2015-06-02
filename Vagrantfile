@@ -30,7 +30,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         v.memory = 2048
       end
       # allow root to SSH into the machines the same as ubuntu
-      config.vm.provision :shell, inline: 'sudo cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys'
+      config.vm.provision :shell, inline: 'cat /vagrant/insecure_private_key.pub >> /root/.ssh/authorized_keys'
+      config.vm.provision :shell, inline: 'cp /vagrant/insecure_private_key >> /root/.ssh/id_rsa'
+      config.vm.provision :shell, inline: 'cp /vagrant/insecure_private_key.pub >> /root/.ssh/id_rsa.pub'
     end
   end
 end
