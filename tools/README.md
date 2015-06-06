@@ -1,4 +1,4 @@
-# test-flocker-cluster
+# tools
 
 An acceptance test for the combination of:
 
@@ -6,6 +6,11 @@ An acceptance test for the combination of:
  * [flocker-docker-plugin](https://github.com/clusterhq/flocker-docker-plugin)
 
 ## test.sh
+
+```
+$ bash test.sh
+```
+
 A script that does the following actions:
 
  * spin up a vagrant cluster of 3 nodes
