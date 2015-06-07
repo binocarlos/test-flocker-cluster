@@ -53,6 +53,7 @@ class FlockerTutorialTests(TestCase):
             CONTROL_IP,
             CONTROL_PORT,)
 
+        print "base url: %s" % (self.base_url,)
         self.agent = Agent(reactor) # no connectionpool
         self.client = get_client(
             certificates_path=FilePath(CERTS_FOLDER),
