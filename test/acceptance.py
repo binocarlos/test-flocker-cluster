@@ -8,7 +8,7 @@ To run these tests:
 
 $ trial test.acceptance
 """
-import sys, os, json
+import sys, os, json, treq
 
 from treq.client import HTTPClient
 from twisted.internet import defer, reactor
@@ -24,11 +24,13 @@ CONTROL_PORT = "4523"
 # the base test folder
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
-# where to download the vagrant box from
+# the IP address of the control node
 CONTROL_IP = os.environ.get("CONTROL_IP", "172.16.255.250")
-# where to download the Vagrantfile and credentials from
-CONTROL_PORT = os.environ.get("CONTROL_PORT", "4523")
-# where to downlod the Vagrantfile and credentils to
+# the IP address of the agent node
+AGENT_IP = os.environ.get("AGENT_IP", "172.16.255.251")
+# the port of the control node
+CONTROL_PORT = os.environ.get("CONTROL_PORT", 4523)
+# the folder where the credentials live
 CERTS_FOLDER = os.environ.get("CERTS_FOLDER", 
     os.path.realpath(BASE_PATH + "/../_files"))
 # the name of the cluster.crt file
@@ -53,9 +55,9 @@ class FlockerTutorialTests(TestCase):
         """
         self.base_url = "https://%s:%s/v1" % (
             CONTROL_IP,
-            CONTROL_PORT,
-            )
-        #self.agent = Agent(reactor) # no connectionpool
+            CONTROL_PORT,)
+
+        self.agent = Agent(reactor) # no connectionpool
         self.client = get_client(
             certificates_path=FilePath(CERTS_FOLDER),
             cluster_certificate_filename=CLUSTER_CERT,
@@ -73,12 +75,13 @@ class FlockerTutorialTests(TestCase):
         """
         Check that we can see both nodes using the txflocker client.
         """
-        #d = self.client.get(self.base_url + "/state/nodes")
-        #d.addCallback(treq.json_content)
-        #def got_nodes(nodes):
-        #    print "got nodes"
-        #    print nodes
-        #d.addCallback(got_nodes)
+        d = self.client.get(self.base_url + "/state/nodes")
+        d.addCallback(treq.json_content)
+        def got_nodes(nodes):
+            print "got nodes"
+            print nodes
+        d.addCallback(got_nodes)
+        return d
 
 def get_tls_client():
     """
