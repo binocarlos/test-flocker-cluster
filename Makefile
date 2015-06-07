@@ -1,4 +1,4 @@
 .PHONY: boot
 
 boot:
-	bash boot.sh
+	@bash boot.sh
