@@ -36,8 +36,8 @@ vagrant up
 
 cat <<EOT
 curl -s \\
-    --cacert $$DOWNLOAD_FOLDER/cluster.crt \\
-    --cert $$DOWNLOAD_FOLDER/user.crt \\
+    --cacert $DOWNLOAD_FOLDER/cluster.crt \\
+    --cert $DOWNLOAD_FOLDER/user.crt \\
     --key $DOWNLOAD_FOLDER/user.key \\
     https://172.16.255.250:4523/v1/state/nodes
 EOT
