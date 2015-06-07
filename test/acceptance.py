@@ -83,7 +83,7 @@ class FlockerTutorialTests(TestCase):
         """
         pass
 
-    def test_a_list_nodes(self):
+    def test_list_nodes(self):
         """
         Check that we can see both nodes using the txflocker client.
 
