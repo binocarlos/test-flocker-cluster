@@ -83,7 +83,7 @@ class FlockerTutorialTests(TestCase):
         """
         pass
 
-    def test_list_nodes(self):
+    def test_a_list_nodes(self):
         """
         Check that we can see both nodes using the txflocker client.
 
@@ -91,19 +91,17 @@ class FlockerTutorialTests(TestCase):
         call to the /state/nodes endpoint.  We should see both 
         CONTROL_IP and AGENT_IP in the results
         """
-        d = self.client.get(self.base_url + "/state/nodes")
-        d.addCallback(treq.json_content)
         def got_nodes(nodes):
             ips = {}
             for node in nodes:
                 ips[node["host"]] = True
             self.assertEqual(ips[CONTROL_IP], True)
             self.assertEqual(ips[AGENT_IP], True)
-        return self._list_nodes()
+        d = self._list_nodes()
         d.addCallback(got_nodes)
         return d
 
-    def test_create_volume(self):
+    def test_b_create_volume(self):
         """
         Check that we can create a volume on node1
         First map the nodeip -> nodeuuid
@@ -136,7 +134,7 @@ class FlockerTutorialTests(TestCase):
                 self.assertEqual(data["deleted"], False)
                 self.assertEqual(data["metadata"]["name"], VOLUME_NAME)
                 self.assertEqual(data["maximum_size"], VOLUME_SIZE)
-                self.assertEqual(data["primary"], node_uuid)                
+                self.assertEqual(data["primary"], node_uuid)             
             d.addCallback(dataset_created)
             return d
         # first we must get the uuid for the AGENT_IP
@@ -145,7 +143,7 @@ class FlockerTutorialTests(TestCase):
         d.addCallback(create_volume)
         return d
 
-    def test_configuration(self):
+    def test_c_configuration(self):
         """
         Check the configuration for the volume we just created
         """
@@ -153,11 +151,9 @@ class FlockerTutorialTests(TestCase):
             def volumes_loaded(volumes):
                 found_volume = None
                 for volume in volumes:
-                    print "%s = %s" % (volume["metadata"]["name"], VOLUME_NAME,)
                     if volume["metadata"]["name"] == VOLUME_NAME:
                         found_volume = volume
                         break
-                print "NODE UUID %s" % (uuid,)
                 self.assertTrue(found_volume is not None)
                 self.assertEqual(found_volume["deleted"], False)
                 self.assertEqual(found_volume["primary"], uuid)
@@ -207,3 +203,28 @@ class FlockerTutorialTests(TestCase):
         d = self._list_nodes()
         d.addCallback(got_nodes)
         return d
+
+
+# borrowed from flocker.testtools
+from twisted.internet.defer import maybeDeferred
+from twisted.internet.task import deferLater
+
+def loop_until(predicate):
+    """Call predicate every 0.1 seconds, until it returns something ``Truthy``.
+
+    :param predicate: Callable returning termination condition.
+    :type predicate: 0-argument callable returning a Deferred.
+
+    :return: A ``Deferred`` firing with the first ``Truthy`` response from
+        ``predicate``.
+    """
+    d = maybeDeferred(predicate)
+
+    def loop(result):
+        if not result:
+            d = deferLater(reactor, 0.1, predicate)
+            d.addCallback(loop)
+            return d
+        return result
+    d.addCallback(loop)
+    return d
