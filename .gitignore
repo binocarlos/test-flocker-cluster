@@ -16,3 +16,4 @@ _trial_temp
 *.egg-info
 .tox
 dist
+build
