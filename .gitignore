@@ -13,3 +13,6 @@ ehthumbs.db
 .aws_secrets
 _files
 _trial_temp
+*.egg-info
+.tox
+dist
