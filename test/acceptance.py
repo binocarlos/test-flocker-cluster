@@ -101,7 +101,7 @@ class FlockerTutorialTests(TestCase):
         d.addCallback(got_nodes)
         return d
 
-    def test_b_create_volume(self):
+    def test_create_volume(self):
         """
         Check that we can create a volume on node1
         First map the nodeip -> nodeuuid
@@ -109,7 +109,7 @@ class FlockerTutorialTests(TestCase):
         Then GET /configuration/datasets
         Then WAIT /state/datasets
         """
-        def create_volume(node_uuid):
+        def uuid_loaded(node_uuid):
             """
             Use the node uuid to create a volume against it
             We post a JSON body with a 200Mb maximum size
@@ -117,6 +117,36 @@ class FlockerTutorialTests(TestCase):
             for a volume with that name and size
             """
             self.assertTrue(len(node_uuid) > 0)
+            
+            def volumes_loaded(volumes):
+                """
+                We have a list of the volumes in the configuration
+                check that our volume is present and has correct values
+                """
+                found_volume = None
+                for volume in volumes:
+                    if volume["metadata"]["name"] == VOLUME_NAME:
+                        found_volume = volume
+                        break
+                self.assertTrue(found_volume is not None)
+                self.assertEqual(found_volume["deleted"], False)
+                self.assertEqual(found_volume["primary"], node_uuid)
+                self.assertEqual(found_volume["metadata"]["name"], VOLUME_NAME)
+                self.assertEqual(found_volume["maximum_size"], VOLUME_SIZE)
+
+            def dataset_created(data):
+                """
+                We have created a volume - check the API response has
+                the correct values
+                """
+                self.assertEqual(data["deleted"], False)
+                self.assertEqual(data["metadata"]["name"], VOLUME_NAME)
+                self.assertEqual(data["maximum_size"], VOLUME_SIZE)
+                self.assertEqual(data["primary"], node_uuid)
+                d = self._list_configuration()
+                d.addCallback(volumes_loaded)
+                return d
+
             body = {
                 "metadata":{
                     "name":VOLUME_NAME
@@ -125,45 +155,18 @@ class FlockerTutorialTests(TestCase):
                 "primary":node_uuid
             }
             
+            # here is the post request
             d = self.client.post(
                 self.base_url + "/configuration/datasets",
                 json.dumps(body),
                 headers={'Content-Type': ['application/json']})
             d.addCallback(treq.json_content)
-            def dataset_created(data):
-                self.assertEqual(data["deleted"], False)
-                self.assertEqual(data["metadata"]["name"], VOLUME_NAME)
-                self.assertEqual(data["maximum_size"], VOLUME_SIZE)
-                self.assertEqual(data["primary"], node_uuid)             
             d.addCallback(dataset_created)
             return d
         # first we must get the uuid for the AGENT_IP
         d = self._uuid_from_ip(AGENT_IP)
         # once we have the uuid of the node we create the volume
-        d.addCallback(create_volume)
-        return d
-
-    def test_c_configuration(self):
-        """
-        Check the configuration for the volume we just created
-        """
-        def load_volumes(uuid):
-            def volumes_loaded(volumes):
-                found_volume = None
-                for volume in volumes:
-                    if volume["metadata"]["name"] == VOLUME_NAME:
-                        found_volume = volume
-                        break
-                self.assertTrue(found_volume is not None)
-                self.assertEqual(found_volume["deleted"], False)
-                self.assertEqual(found_volume["primary"], uuid)
-                self.assertEqual(found_volume["metadata"]["name"], VOLUME_NAME)
-                self.assertEqual(found_volume["maximum_size"], VOLUME_SIZE)
-            d = self._list_configuration()
-            d.addCallback(volumes_loaded)
-            return d
-        d = self._uuid_from_ip(AGENT_IP)
-        d.addCallback(load_volumes)
+        d.addCallback(uuid_loaded)
         return d
 
     def _list_nodes(self):
