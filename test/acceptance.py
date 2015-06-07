@@ -4,11 +4,14 @@
 Acceptance tests for a temporary version of the Flocker tutorial box along
 with TLS certificates that can authenticate
 
-To run these tests:
+To run these tests you first need a running Flocker cluster.
+
+You can point these tests at an existing cluster or create one
+using the boot.sh script in this repo
 
 $ trial test.acceptance
 """
-import sys, os, json, treq
+import sys, os, json, treq, datetime
 
 from treq.client import HTTPClient
 from twisted.internet import defer, reactor
@@ -35,6 +38,20 @@ CLUSTER_CERT = os.environ.get("CLUSTER_CERT", "cluster.crt")
 USER_CERT = os.environ.get("USER_CERT", "user.crt")
 # the name of the user.key file
 USER_KEY = os.environ.get("USER_KEY", "user.key")
+# the name of the volume to use for these tests
+epoch = datetime.datetime.utcfromtimestamp(0)
+delta = datetime.datetime.now() - epoch
+VOLUME_NAME = "volume" + str(int(delta.total_seconds()))
+# the size of the volume to create
+VOLUME_SIZE = 1024 * 1024 * 200
+
+def unix_time(dt):
+    """
+    Return the seconds since the epoch
+    """
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    delta = dt - epoch
+    return delta.total_seconds()
 
 class FlockerTutorialTests(TestCase):
     """
@@ -52,8 +69,6 @@ class FlockerTutorialTests(TestCase):
         self.base_url = "https://%s:%s/v1" % (
             CONTROL_IP,
             CONTROL_PORT,)
-
-        print "base url: %s" % (self.base_url,)
         self.agent = Agent(reactor) # no connectionpool
         self.client = get_client(
             certificates_path=FilePath(CERTS_FOLDER),
@@ -84,17 +99,111 @@ class FlockerTutorialTests(TestCase):
                 ips[node["host"]] = True
             self.assertEqual(ips[CONTROL_IP], True)
             self.assertEqual(ips[AGENT_IP], True)
+        return self._list_nodes()
         d.addCallback(got_nodes)
         return d
 
-def get_tls_client():
-    """
-    Return a txflocker tls client using the credentials from this folder
+    def test_create_volume(self):
+        """
+        Check that we can create a volume on node1
+        First map the nodeip -> nodeuuid
+        Then POST to /configuration/datasets
+        Then GET /configuration/datasets
+        Then WAIT /state/datasets
+        """
+        def create_volume(node_uuid):
+            """
+            Use the node uuid to create a volume against it
+            We post a JSON body with a 200Mb maximum size
+            and a name - we then check /configuration/datasets
+            for a volume with that name and size
+            """
+            self.assertTrue(len(node_uuid) > 0)
+            body = {
+                "metadata":{
+                    "name":VOLUME_NAME
+                },
+                "maximum_size":VOLUME_SIZE,
+                "primary":node_uuid
+            }
+            
+            d = self.client.post(
+                self.base_url + "/configuration/datasets",
+                json.dumps(body),
+                headers={'Content-Type': ['application/json']})
+            d.addCallback(treq.json_content)
+            def dataset_created(data):
+                self.assertEqual(data["deleted"], False)
+                self.assertEqual(data["metadata"]["name"], VOLUME_NAME)
+                self.assertEqual(data["maximum_size"], VOLUME_SIZE)
+                self.assertEqual(data["primary"], node_uuid)                
+            d.addCallback(dataset_created)
+            return d
+        # first we must get the uuid for the AGENT_IP
+        d = self._uuid_from_ip(AGENT_IP)
+        # once we have the uuid of the node we create the volume
+        d.addCallback(create_volume)
+        return d
 
-    :returns: A ``treq.client.HTTPClient`` instance.
-    """
-    #return get_client(certificates_path=FilePath(BASE_PATH + "/credentials"),
-    #    user_certificate_filename="user.crt",
-    #    user_key_filename="user.key",
-    #    target_hostname=CONTROL_IP,
-    #)
+    def test_configuration(self):
+        """
+        Check the configuration for the volume we just created
+        """
+        def load_volumes(uuid):
+            def volumes_loaded(volumes):
+                found_volume = None
+                for volume in volumes:
+                    print "%s = %s" % (volume["metadata"]["name"], VOLUME_NAME,)
+                    if volume["metadata"]["name"] == VOLUME_NAME:
+                        found_volume = volume
+                        break
+                print "NODE UUID %s" % (uuid,)
+                self.assertTrue(found_volume is not None)
+                self.assertEqual(found_volume["deleted"], False)
+                self.assertEqual(found_volume["primary"], uuid)
+                self.assertEqual(found_volume["metadata"]["name"], VOLUME_NAME)
+                self.assertEqual(found_volume["maximum_size"], VOLUME_SIZE)
+            d = self._list_configuration()
+            d.addCallback(volumes_loaded)
+            return d
+        d = self._uuid_from_ip(AGENT_IP)
+        d.addCallback(load_volumes)
+        return d
+
+    def _list_nodes(self):
+        """
+        Query the /state/nodes endpoint
+        """
+        d = self.client.get(self.base_url + "/state/nodes")
+        d.addCallback(treq.json_content)
+        return d
+
+    def _list_configuration(self):
+        """
+        Query the /configuration/datasets endpoint
+        """
+        d = self.client.get(self.base_url + "/configuration/datasets")
+        d.addCallback(treq.json_content)
+        return d
+
+    def _list_state(self):
+        """
+        Query the /state/datasets endpoint
+        """
+        d = self.client.get(self.base_url + "/state/datasets")
+        d.addCallback(treq.json_content)
+        return d
+
+    def _uuid_from_ip(self, nodeip):
+        """
+        Loop over the nodes in the cluster and try to 
+        match the given ip and return the uuid for that node
+        """
+        def got_nodes(nodes):
+            for node in nodes:
+                if node["host"] == nodeip:
+                    return node["uuid"]
+            return None
+        d = self._list_nodes()
+        d.addCallback(got_nodes)
+        return d
