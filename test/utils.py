@@ -17,7 +17,7 @@ def run_Vagrant(node, command, input):
     :return: stdout as ``bytes``
     """
     return run_Command(
-        "vagrant ssh %s -c \"%s\"",
+        "vagrant ssh %s -c \"%s\"" % (node, command,),
         input,
     )
 
