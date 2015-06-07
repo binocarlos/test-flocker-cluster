@@ -17,10 +17,6 @@ from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 from txflocker.client import get_client
 
-# the control connection details
-CONTROL_IP = "172.16.255.250"
-CONTROL_PORT = "4523"
-
 # the base test folder
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -74,12 +70,19 @@ class FlockerTutorialTests(TestCase):
     def test_list_nodes(self):
         """
         Check that we can see both nodes using the txflocker client.
+
+        We are looking for the host property in each object from a
+        call to the /state/nodes endpoint.  We should see both 
+        CONTROL_IP and AGENT_IP in the results
         """
         d = self.client.get(self.base_url + "/state/nodes")
         d.addCallback(treq.json_content)
         def got_nodes(nodes):
-            print "got nodes"
-            print nodes
+            ips = {}
+            for node in nodes:
+                ips[node["host"]] = True
+            self.assertEqual(ips[CONTROL_IP], True)
+            self.assertEqual(ips[AGENT_IP], True)
         d.addCallback(got_nodes)
         return d
 
