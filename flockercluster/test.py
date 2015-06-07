@@ -10,12 +10,12 @@ $ trial test_acceptance
 """
 import sys, os, json
 
+from treq.client import HTTPClient
 from twisted.internet import defer, reactor
 from twisted.web.client import Agent
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
-from ..txflocker.client import get_client
-from ..lib.utils import run_Command, run_Vagrant
+from txflocker import get_client
 
 CONTROL_IP = "172.16.255.250"
 CONTROL_PORT = "4523"
@@ -58,7 +58,7 @@ def get_tls_client():
 
     :returns: A ``treq.client.HTTPClient`` instance.
     """
-    return txflocker_get_client(certificates_path=FilePath(BASE_PATH + "/credentials"),
+    return get_client(certificates_path=FilePath(BASE_PATH + "/credentials"),
         user_certificate_filename="user.crt",
         user_key_filename="user.key",
         target_hostname=CONTROL_IP,

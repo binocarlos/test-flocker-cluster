@@ -11,4 +11,5 @@ Icon?
 Thumbs.db
 ehthumbs.db
 .aws_secrets
-unofficial-flocker-tools
+_files
+_trial_temp
