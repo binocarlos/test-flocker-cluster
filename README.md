@@ -33,12 +33,15 @@ $ make boot
 Variables to control this script:
 
  * BOX_URL - Where to download the Vagrant box from:
+
 `http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json`
 
  * BASE_URL - Where to download the Vagrantfile and certs from:
+
 `http://doc-dev.clusterhq.com`
 
  * DOWNLOAD_FOLDER - The folder to download the Vagrantfile and certs
+
 `_files`
 
 The download folder is where the Vagrantfile and .vagrant folder are created.
@@ -73,18 +76,23 @@ $ tox
 Variables to control the tests:
 
  * CONTROL_IP - The IP address of the control service
+
 `172.16.255.250`
 
  * CONTROL_PORT - The port of the control service
+
 `4523`
 
  * CERTS_FOLDER - The folder where the credentials live
+
 `BASE_PATH + "/../_files"`
 
  * CLUSTER_CERT - The name of the cluster certificate file
+
 `cluster.crt`
 
  * USER_CERT - The name of the user certificate file
+ 
 `user.crt`
 
  * USER_KEY - The name of the user key file
